@@ -1,0 +1,32 @@
+#pragma once
+
+#include "event_poll.hpp"
+#include "http_connection_handler.hpp"
+#include "http_server_config.hpp"
+#include "socket.hpp"
+#include "thread_pool.hpp"
+
+#include <memory>
+
+class HttpServer {
+  public:
+    explicit HttpServer(HttpServerConfig config);
+    ~HttpServer() = default;
+
+    void setRequestHandler(IHttpRequestHandler* request_handler);
+
+    void start();
+    void run();
+    void stop();
+
+  private:
+    Socket    m_listen_socket;
+    EventPoll m_poll;
+
+    HttpConnectionHandler m_connection_handler;
+    HttpServerConfig m_config;
+    HttpProtocol m_protocol;
+    ThreadPool m_thread_pool;
+
+    bool m_running = false;
+};

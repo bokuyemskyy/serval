@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.20)
 
 project(serval LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include(FetchContent)
@@ -31,15 +34,39 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(socketpoll)
 
-file(GLOB SRCS 
-    src/*.cpp
+file(GLOB SRCS
+        server/src/*.cpp
 )
 
-add_executable(serval ${SRCS})
+add_executable(serval ${SRCS}
+        lib/src/http_protocol.cpp
+        lib/include/http_protocol.hpp)
 
-target_include_directories(serval PRIVATE include)
+target_include_directories(serval PRIVATE server/include)
 
 target_link_libraries(serval PUBLIC socketpoll cxxopts::cxxopts tomlplusplus::tomlplusplus)
+
+# Docs
+option(BUILD_DOCS "Build documentation with Doxygen" OFF)
+
+if(BUILD_DOCS)
+    find_package(Doxygen QUIET)
+
+    if(NOT DOXYGEN_FOUND)
+        message(WARNING "Doxygen not found. Skipping docs.")
+        return()
+    endif()
+
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile
+            ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile @ONLY)
+
+    add_custom_target(doc
+            COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+            COMMENT "Generating API documentation with Doxygen"
+            VERBATIM
+    )
+endif()
 
 # Tests
 option(BUILD_TESTING "Build tests" OFF)

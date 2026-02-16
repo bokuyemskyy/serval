@@ -2,6 +2,7 @@
 /.cache/
 /build/
 /Testing/
+/.idea/
 
 # Prerequisites
 *.d

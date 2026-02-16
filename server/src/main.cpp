@@ -7,10 +7,11 @@
 #include <memory>
 
 std::unique_ptr<HttpServer> g_server;
+std::shared_ptr<Logger> g_logger;
 
 void handleSignal(int signum) {
     if (signum == SIGINT || signum == SIGTERM) {
-        Logger::log(LogLevel::WARN, "Received signal. Shutting down.");
+        g_logger->log(LogLevel::WARN, "Received signal. Shutting down.");
         if (g_server)
             g_server->stop();
     }
@@ -20,7 +21,8 @@ int main(int argc, char* argv[]) {
     try {
         HttpServerConfig config = HttpServerConfig::load(argc, argv);
 
-        g_server = std::make_unique<HttpServer>(std::move(config));
+        g_logger = std::make_shared<Logger>();
+        g_server = std::make_unique<HttpServer>(std::move(config), g_logger);
 
         StaticFileHandler handler(".");
 
@@ -31,7 +33,7 @@ int main(int argc, char* argv[]) {
 
         g_server->start();
     } catch (const std::exception& e) {
-        Logger::log(LogLevel::ERR, e.what());
+        g_logger->log(LogLevel::ERR, e.what());
         return 1;
     }
 }

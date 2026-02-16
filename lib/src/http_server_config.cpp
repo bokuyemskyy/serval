@@ -1,6 +1,6 @@
 #include "../include/http_server_config.hpp"
 
-#include "logger.hpp"
+// #include "logger.hpp"
 
 #include <cxxopts.hpp>
 #include <filesystem>
@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <string>
 #include <toml++/toml.hpp>
+
 
 HttpServerConfig HttpServerConfig::load(int argc, char* argv[]) {
     cxxopts::Options options("serval", "Static HTTP server");
@@ -47,7 +48,6 @@ HttpServerConfig HttpServerConfig::load(int argc, char* argv[]) {
     if (!config_path.empty()) {
         try {
             new_config.loadFromToml(config_path);
-            Logger::log(LogLevel::INFO, "Loaded config from: " + config_path);
         } catch (const std::exception& e) {
             throw std::runtime_error("Error loading config file: " + std::string(e.what()));
         }

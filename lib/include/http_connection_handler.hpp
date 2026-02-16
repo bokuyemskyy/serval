@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../server/include/http_response.hpp"
+#include "http_response.hpp"
 #include "http_connection.hpp"
 #include "http_request.hpp"
 #include "ihttp_request_handler.hpp"

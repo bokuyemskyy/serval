@@ -2,11 +2,11 @@
 
 #include "../include/http_server_config.hpp"
 #include "event_poll.hpp"
-#include "logger.hpp"
+// #include "logger.hpp"
 #include "socket.hpp"
 
-HttpServer::HttpServer(HttpServerConfig config)
-    : m_config(std::move(config)), m_protocol(m_config),  m_thread_pool(m_config.worker_threads, m_protocol, m_config) {
+
+HttpServer::HttpServer(HttpServerConfig config, std::shared_ptr<ILogger> logger) : m_config(std::move(config)), m_protocol(m_config),  m_thread_pool(m_config.worker_threads, m_protocol, m_config), m_logger(logger) {
     m_thread_pool.setConnectionHandler([this](HttpConnection conn) {
           this->m_connection_handler.handleConnection(std::move(conn));
       });
@@ -23,7 +23,7 @@ void HttpServer::start() {
 
     m_poll.addFd(m_listen_socket.fd(), PollEvent::READ);
 
-    Logger::log(LogLevel::INFO, "Ready to accept TCP connections.");
+    // m_log_handler("[INFO] Ready to accept TCP connections.");
     m_running = true;
 
     m_thread_pool.start();

@@ -3,6 +3,7 @@
 #include "event_poll.hpp"
 #include "http_connection_handler.hpp"
 #include "http_server_config.hpp"
+#include "ilogger.hpp"
 #include "socket.hpp"
 #include "thread_pool.hpp"
 
@@ -10,7 +11,8 @@
 
 class HttpServer {
   public:
-    explicit HttpServer(HttpServerConfig config);
+
+    explicit HttpServer(HttpServerConfig config, std::shared_ptr<ILogger> logger);
     ~HttpServer() = default;
 
     void setRequestHandler(IHttpRequestHandler* request_handler);
@@ -22,6 +24,8 @@ class HttpServer {
   private:
     Socket    m_listen_socket;
     EventPoll m_poll;
+
+    std::shared_ptr<ILogger> m_logger;
 
     HttpConnectionHandler m_connection_handler;
     HttpServerConfig m_config;

@@ -9,9 +9,8 @@
 
 class Logger : public ILogger {
   public:
-    void log(LogLevel level, const std::string& message);
-
-    // void setMinLogLevel(LogLevel min_log_level) { m_min_log_level = min_log_level; }
+    void log(LogLevel level, const std::string& message) override;
+    void setMinimalLogLevel(LogLevel min_log_level) override;
 
   private:
     static LogLevel   m_min_log_level;

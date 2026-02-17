@@ -1,19 +1,33 @@
 #include "http_connection_handler.hpp"
 
-#include "../include/http_connection.hpp"
-#include "../include/http_request.hpp"
+#include "http_connection.hpp"
+#include "http_request.hpp"
 #include "http_response.hpp"
 
 HttpConnectionHandler::HttpConnectionHandler(std::shared_ptr<IHttpRequestHandler> request_handler,
                                              HttpServerConfig&                    config)
     : m_request_handler(request_handler), m_config(config), m_protocol(m_config) {}
 
-void HttpConnectionHandler::handle(std::shared_ptr<HttpConnection> conn) const {
+void HttpConnectionHandler::handle(std::shared_ptr<HttpConnection> conn) {
     if (!m_request_handler)
         throw std::invalid_argument("No HttpRequestHandler set");
 
-    HttpRequest  req  = conn->readRequest();
-    HttpResponse resp = m_request_handler->handleRequest(req);
-    conn->writeResponse(resp);
-    conn->close();
+    if (conn->state == HttpConnectionState::READING) {
+        if (conn->recv()) {
+            if (m_protocol.isRequestComplete(conn->buffer)) {
+                HttpRequest request = m_protocol.parseRequest(conn->buffer);
+                conn->keep_alive = request.keep_alive; // Protocol decides on whether request keeps the connection alive
+                                                       // based on the HTTP version per-request
+                HttpResponse response = m_request_handler->handle(request);
+                conn->startSend(m_protocol.serializeResponse(response));
+            }
+        }
+    } else if (conn->state == HttpConnectionState::WRITING) {
+        if (conn->send()) {
+            if (conn->keep_alive)
+                conn->startRecv();
+            else
+                conn->close();
+        }
+    }
 }

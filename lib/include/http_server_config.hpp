@@ -41,10 +41,6 @@ class HttpServerConfig::Builder {
         m_config.port = p;
         return *this;
     }
-    Builder& setLogger(std::shared_ptr<ILogger> l) {
-        m_config.logger = std::move(l);
-        return *this;
-    }
 
     Builder& setLoggingLevel(LogLevel level) {
         m_config.logging_level = level;

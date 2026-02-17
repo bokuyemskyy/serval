@@ -2,6 +2,7 @@
 
 #include "../../server/include/config.hpp"
 #include "event_poll.hpp"
+#include "http_connection_exception.hpp"
 #include "socket.hpp"
 
 HttpServer::HttpServer(std::shared_ptr<IHttpRequestHandler> request_handler, std::shared_ptr<ILogger> logger,
@@ -17,16 +18,18 @@ void HttpServer::addConnection(std::shared_ptr<HttpConnection> conn) {
 
     m_connections[conn->fd()] = conn;
 
-    m_poll.addFd(conn->fd(), PollEvent::READ);
+    m_poll.addFd(conn->fd(), PollEvent::READ | PollEvent::ONESHOT);
 }
 
 void HttpServer::rearmConnection(std::shared_ptr<HttpConnection> conn) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
     switch (conn->state) {
         case HttpConnectionState::READING:
-            m_poll.modifyFd(conn->fd(), PollEvent::READ);
+            m_poll.modifyFd(conn->fd(), PollEvent::READ | PollEvent::ONESHOT);
             break;
         case HttpConnectionState::WRITING:
-            m_poll.modifyFd(conn->fd(), PollEvent::WRITE);
+            m_poll.modifyFd(conn->fd(), PollEvent::WRITE | PollEvent::ONESHOT);
             break;
         case HttpConnectionState::CLOSING:
             throw std::runtime_error("Cannot rearm HttpConnection which is in close state.");
@@ -69,7 +72,13 @@ void HttpServer::run() {
                 addConnection(conn);
 
                 m_thread_pool.enqueue([this, conn] {
-                    m_connection_handler.handle(conn);
+                    try {
+                        m_connection_handler.handle(conn);
+                    } catch (const HttpConnectionException& e) {
+                        m_logger->log(LogLevel::WARN, "Connection error: " + std::string(e.what()));
+                        removeConnection(conn);
+                        return;
+                    }
                     if (conn->state == HttpConnectionState::CLOSING)
                         removeConnection(conn);
                     else

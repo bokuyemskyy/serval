@@ -30,7 +30,7 @@ class StaticFileHandler : public IHttpRequestHandler {
         }
     }
 
-    HttpResponse handleRequest(const HttpRequest& request) override {
+    HttpResponse handle(const HttpRequest& request) override {
         // Reject invalid paths immediately
         if (request.path.empty() || request.path[0] != '/') {
             return HttpResponse::badRequest();

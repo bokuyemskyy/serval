@@ -8,7 +8,7 @@ class HttpConnectionHandler {
   public:
     HttpConnectionHandler(std::shared_ptr<IHttpRequestHandler> request_handler, HttpServerConfig& config);
 
-    void handle(std::shared_ptr<HttpConnection> conn) const;
+    void handle(std::shared_ptr<HttpConnection> conn);
 
   private:
     std::shared_ptr<IHttpRequestHandler> m_request_handler = nullptr;

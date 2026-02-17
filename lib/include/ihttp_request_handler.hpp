@@ -4,7 +4,7 @@
 #include "http_response.hpp"
 
 class IHttpRequestHandler {
-    public:
-    virtual HttpResponse handleRequest(const HttpRequest& request) = 0;
-    virtual ~IHttpRequestHandler() = default;
+  public:
+    virtual HttpResponse handle(const HttpRequest& request) = 0;
+    virtual ~IHttpRequestHandler()                          = default;
 };

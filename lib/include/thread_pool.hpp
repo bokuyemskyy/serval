@@ -1,38 +1,28 @@
 #pragma once
 
-#include "http_connection.hpp"
-#include "http_connection_handler.hpp"
-#include "socket.hpp"
-
 #include <condition_variable>
 #include <functional>
 #include <mutex>
 #include <queue>
 #include <thread>
 #include <vector>
+
 class ThreadPool {
   public:
-    using ConnectionHandler = std::function<void(HttpConnection)>;
+    using Task = std::function<void()>;
 
-    ThreadPool(int num_threads, HttpProtocol& protocol, HttpServerConfig& config);
+    ThreadPool(int num_threads);
     ~ThreadPool();
 
-    void setConnectionHandler(const ConnectionHandler& connection_handler);
-
     void start();
+    void enqueue(Task task);
     void stop();
-    void enqueue(Socket client);
 
   private:
+    bool m_stop = false;
     int m_num_threads;
     std::vector<std::thread> m_workers;
-    std::queue<Socket>       m_tasks;
-    std::mutex               m_queue_mutex;
+    std::queue<Task>       m_tasks;
+    std::mutex               m_mutex;
     std::condition_variable  m_cv;
-    bool                     m_stop = false;
-
-    ConnectionHandler m_connection_handler;
-
-    HttpServerConfig& m_config;
-    HttpProtocol&            m_protocol;
 };

@@ -32,5 +32,9 @@ void Logger::log(LogLevel level, const std::string& message) {
     std::cout << message << "\n";
 }
 
+void Logger::setMinimalLogLevel(LogLevel min_log_level) {
+    m_min_log_level = min_log_level;
+}
+
 LogLevel   Logger::m_min_log_level = LogLevel::INFO;
 std::mutex Logger::m_mutex;

@@ -1,18 +1,18 @@
 #pragma once
 
-#include "http_response.hpp"
 #include "http_connection.hpp"
-#include "http_request.hpp"
 #include "ihttp_request_handler.hpp"
 
 #include <functional>
 class HttpConnectionHandler {
   public:
-    HttpConnectionHandler();
+    HttpConnectionHandler(std::shared_ptr<IHttpRequestHandler> request_handler, HttpServerConfig& config);
 
-    void setRequestHandler(IHttpRequestHandler* request_handler);
-    void handleConnection(HttpConnection conn);
+    void handle(std::shared_ptr<HttpConnection> conn) const;
 
   private:
-  IHttpRequestHandler* m_request_handler = nullptr;
+    std::shared_ptr<IHttpRequestHandler> m_request_handler = nullptr;
+
+    HttpServerConfig m_config;
+    HttpProtocol     m_protocol;
 };

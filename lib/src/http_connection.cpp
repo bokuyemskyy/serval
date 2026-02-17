@@ -7,16 +7,17 @@
 
 #include <thread>
 
-HttpConnection::HttpConnection(Socket client, HttpProtocol& protocol, HttpServerConfig& config) : m_client(std::move(client)), m_protocol(protocol), m_config(config) {}
+HttpConnection::HttpConnection(Socket client) : client(std::move(client)) {}
+int HttpConnection::fd() const { return client.fd(); }
 
 HttpRequest HttpConnection::readRequest()
 {
     auto start = std::chrono::steady_clock::now();
-    const auto TIMEOUT = std::chrono::milliseconds(m_config.REQUEST_TIMEOUT_MS);
+    const auto TIMEOUT = std::chrono::milliseconds(config.REQUEST_TIMEOUT_MS);
 
     std::string raw_request;
-    while (!m_protocol.isRequestComplete(raw_request)) {
-        switch (auto [status, bytes] = m_client.recv(raw_request, 4096); status) {
+    while (!protocol.isRequestComplete(raw_request)) {
+        switch (auto [status, bytes] = client.recv(raw_request, 4096); status) {
             case IoStatus::DATA:
                 continue;
 
@@ -33,17 +34,17 @@ HttpRequest HttpConnection::readRequest()
         }
     }
 
-    return m_protocol.parseRequest(raw_request);
+    return protocol.parseRequest(raw_request);
 }
 
 void HttpConnection::writeResponse(HttpResponse response) {
     auto start = std::chrono::steady_clock::now();
-    const auto TIMEOUT = std::chrono::milliseconds(m_config.REQUEST_TIMEOUT_MS);
+    const auto TIMEOUT = std::chrono::milliseconds(config.REQUEST_TIMEOUT_MS);
 
     const std::string raw_response = response.toString();
     size_t total_bytes_sent = 0;
     while (total_bytes_sent < raw_response.length()) {
-        switch (auto [status, bytes] = m_client.send(raw_response); status) {
+        switch (auto [status, bytes] = client.send(raw_response); status) {
             case IoStatus::DATA:
                 total_bytes_sent += bytes;
                 continue;
@@ -62,4 +63,4 @@ void HttpConnection::writeResponse(HttpResponse response) {
     }
 }
 
-void HttpConnection::close() { m_client.close(); }
+void HttpConnection::close() { client.close(); }

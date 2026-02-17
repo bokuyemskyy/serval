@@ -3,17 +3,17 @@
 #include "../include/http_connection.hpp"
 #include "../include/http_request.hpp"
 #include "http_response.hpp"
-#include "socket.hpp"
 
-HttpConnectionHandler::HttpConnectionHandler() = default;
-void HttpConnectionHandler::setRequestHandler(IHttpRequestHandler* request_handler) {m_request_handler = request_handler;}
+HttpConnectionHandler::HttpConnectionHandler(std::shared_ptr<IHttpRequestHandler> request_handler,
+                                             HttpServerConfig&                    config)
+    : m_request_handler(request_handler), m_config(config), m_protocol(m_config) {}
 
-void HttpConnectionHandler::handleConnection(HttpConnection conn) {
-    if (m_request_handler == nullptr) throw std::invalid_argument("HttpRequestHandler is nullptr");
+void HttpConnectionHandler::handle(std::shared_ptr<HttpConnection> conn) const {
+    if (!m_request_handler)
+        throw std::invalid_argument("No HttpRequestHandler set");
 
-    HttpRequest  req  = conn.readRequest();
+    HttpRequest  req  = conn->readRequest();
     HttpResponse resp = m_request_handler->handleRequest(req);
-
-    conn.writeResponse(resp);
-    conn.close();
+    conn->writeResponse(resp);
+    conn->close();
 }

@@ -1,13 +1,14 @@
 
 #include "../../lib/include/http_server.hpp"
-#include "../../lib/include/http_server_config.hpp"
+#include "../include/config.hpp"
+#include "logger.hpp"
 #include "static_file_server.hpp"
 
 #include <csignal>
 #include <memory>
 
 std::unique_ptr<HttpServer> g_server;
-std::shared_ptr<Logger> g_logger;
+std::shared_ptr<Logger>     g_logger;
 
 void handleSignal(int signum) {
     if (signum == SIGINT || signum == SIGTERM) {
@@ -19,14 +20,20 @@ void handleSignal(int signum) {
 
 int main(int argc, char* argv[]) {
     try {
-        HttpServerConfig config = HttpServerConfig::load(argc, argv);
+        ServerConfig config = ServerConfig::load(argc, argv);
 
         g_logger = std::make_shared<Logger>();
-        g_server = std::make_unique<HttpServer>(std::move(config), g_logger);
 
-        StaticFileHandler handler(".");
+        if (config.config_file_used.empty()) {
+            g_logger->log(LogLevel::INFO, "No config file found, using default settings.");
+        } else {
+            g_logger->log(LogLevel::INFO, "Config file \"" + config.config_file_used + "\" used.");
+        }
 
-        g_server->setRequestHandler(&handler);
+        std::shared_ptr<StaticFileHandler> handler =
+            std::make_shared<StaticFileHandler>(config.createFileServerConfig());
+
+        g_server = std::make_unique<HttpServer>(handler, g_logger, config.createHttpServerConfig());
 
         std::signal(SIGINT, handleSignal);
         std::signal(SIGTERM, handleSignal);

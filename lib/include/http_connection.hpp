@@ -5,20 +5,24 @@
 #include "http_response.hpp"
 #include "socket.hpp"
 
-class HttpConnection {
-  public:
-    HttpConnection(Socket client, HttpProtocol& protocol, HttpServerConfig& config);
+enum class HttpConnectionState {
+    WRITING,
+    READING,
+    CLOSING
+};
+
+struct HttpConnection {
+    HttpConnection(Socket client);
+
+    int fd() const;
+
 
     HttpRequest readRequest();
     void        writeResponse(HttpResponse response);
+
     void close();
 
-  private:
-    Socket m_client;
-    HttpProtocol& m_protocol;
-    HttpServerConfig& m_config;
+    Socket client;
 
-    static constexpr size_t CHUNK_SIZE      = 4096;
-    static constexpr size_t MAX_HEADER_SIZE = 8192;
-    static constexpr size_t MAX_BODY_SIZE   = 10 * 1024 * 1024;
+    HttpConnectionState state{HttpConnectionState::READING};
 };

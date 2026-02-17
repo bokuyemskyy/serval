@@ -1,6 +1,4 @@
-#include "../include/http_server_config.hpp"
-
-// #include "logger.hpp"
+#include "config.hpp"
 
 #include <cxxopts.hpp>
 #include <filesystem>
@@ -9,8 +7,7 @@
 #include <string>
 #include <toml++/toml.hpp>
 
-
-HttpServerConfig HttpServerConfig::load(int argc, char* argv[]) {
+ServerConfig ServerConfig::load(int argc, char* argv[]) {
     cxxopts::Options options("serval", "Static HTTP server");
 
     // clang-format off
@@ -31,7 +28,7 @@ HttpServerConfig HttpServerConfig::load(int argc, char* argv[]) {
         exit(0);
     }
 
-    HttpServerConfig new_config;
+    ServerConfig new_config;
 
     std::string config_path;
     if (parse_result.count("config")) {
@@ -57,8 +54,29 @@ HttpServerConfig HttpServerConfig::load(int argc, char* argv[]) {
 
     return new_config;
 }
+FileServerConfig ServerConfig::createFileServerConfig() const {
+    return FileServerConfig::Builder()
+        .setRootDirectory(root_directory)
+        .enableDirectoryListing(directory_listing)
+        .enableShowHiddenFiles(show_hidden_files)
+        .setCustomMimeTypes(custom_mime_types)
+        .build();
+}
+HttpServerConfig ServerConfig::createHttpServerConfig() const {
+    return HttpServerConfig::Builder()
+        .setHost(host)
+        .setPort(port)
+        .setLoggingLevel(logging_level)
+        .enableCors(cors_enabled)
+        .setCorsAllowOrigin(cors_allow_origin)
+        .setCustomHeaders(custom_headers)
+        .setWorkerThreads(worker_threads)
+        .setMaxConnections(max_connections)
+        .setConnectionTimeoutMs(connection_timeout_ms)
+        .build();
+}
 
-void HttpServerConfig::loadFromToml(const std::string& config_path) {
+void ServerConfig::loadFromToml(const std::string& config_path) {
     std::filesystem::path p(config_path);
 
     if (!std::filesystem::is_regular_file(p))
@@ -114,9 +132,11 @@ void HttpServerConfig::loadFromToml(const std::string& config_path) {
             }
         });
     }
+
+    config_file_used = config_path;
 }
 
-void HttpServerConfig::applyCliOverrides(const cxxopts::ParseResult& parse_result) {
+void ServerConfig::applyCliOverrides(const cxxopts::ParseResult& parse_result) {
     if (parse_result.count("host"))
         host = parse_result["host"].as<std::string>();
 

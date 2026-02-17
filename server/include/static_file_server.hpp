@@ -1,5 +1,6 @@
 #pragma once
 
+#include "file_server_config.hpp"
 #include "ihttp_request_handler.hpp"
 
 #include <filesystem>
@@ -21,7 +22,7 @@ class StaticFileHandler : public IHttpRequestHandler {
     }
 
   public:
-    explicit StaticFileHandler(HttpServerConfig config) {
+    explicit StaticFileHandler(FileServerConfig config) {
         m_root_dir = std::filesystem::canonical(config.root_directory);
 
         for (const auto& [key, value] : config.custom_mime_types) {

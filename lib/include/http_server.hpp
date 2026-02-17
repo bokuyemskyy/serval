@@ -1,8 +1,8 @@
 #pragma once
 
+#include "../../server/include/config.hpp"
 #include "event_poll.hpp"
 #include "http_connection_handler.hpp"
-#include "http_server_config.hpp"
 #include "ilogger.hpp"
 #include "socket.hpp"
 #include "thread_pool.hpp"
@@ -11,26 +11,33 @@
 
 class HttpServer {
   public:
-
-    explicit HttpServer(HttpServerConfig config, std::shared_ptr<ILogger> logger);
+    explicit HttpServer(std::shared_ptr<IHttpRequestHandler> request_handler,
+                        std::shared_ptr<ILogger>             logger = std::make_shared<NullLogger>(),
+                        HttpServerConfig                     config = HttpServerConfig());
     ~HttpServer() = default;
-
-    void setRequestHandler(IHttpRequestHandler* request_handler);
 
     void start();
     void run();
     void stop();
 
   private:
-    Socket    m_listen_socket;
-    EventPoll m_poll;
+    // State variables and members
+    std::mutex                                               m_mutex;
+    Socket                                                   m_listen_socket;
+    std::unordered_map<int, std::shared_ptr<HttpConnection>> m_connections{};
+    std::atomic_bool                                         m_running{false};
 
+    // Other modules
+    EventPoll                m_poll;
+    HttpServerConfig         m_config;
+    ThreadPool               m_thread_pool;
+    HttpConnectionHandler    m_connection_handler;
     std::shared_ptr<ILogger> m_logger;
 
-    HttpConnectionHandler m_connection_handler;
-    HttpServerConfig m_config;
-    HttpProtocol m_protocol;
-    ThreadPool m_thread_pool;
+    // Methods
+    void createListenSocket();
 
-    bool m_running = false;
+    void addConnection(std::shared_ptr<HttpConnection> conn);
+    void rearmConnection(std::shared_ptr<HttpConnection> conn);
+    void removeConnection(std::shared_ptr<HttpConnection> conn);
 };

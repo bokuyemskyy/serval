@@ -45,23 +45,23 @@ HttpRequest HttpProtocol::parseRequest(const std::string& raw_request) const {
     // Method
     std::string method_str = request_line.substr(0, first_space);
     if (method_str == "GET")
-        builder.setMethod(HttpMethod::GET);
+        builder.setMethod(HttpMethod::HTTP_GET);
     else if (method_str == "POST")
-        builder.setMethod(HttpMethod::POST);
+        builder.setMethod(HttpMethod::HTTP_POST);
     else if (method_str == "PUT")
-        builder.setMethod(HttpMethod::PUT);
+        builder.setMethod(HttpMethod::HTTP_PUT);
     else if (method_str == "PATCH")
-        builder.setMethod(HttpMethod::PATCH);
+        builder.setMethod(HttpMethod::HTTP_PATCH);
     else if (method_str == "DELETE")
-        builder.setMethod(HttpMethod::DELETE);
+        builder.setMethod(HttpMethod::HTTP_DELETE);
     else if (method_str == "HEAD")
-        builder.setMethod(HttpMethod::HEAD);
+        builder.setMethod(HttpMethod::HTTP_HEAD);
     else if (method_str == "OPTIONS")
-        builder.setMethod(HttpMethod::OPTIONS);
+        builder.setMethod(HttpMethod::HTTP_OPTIONS);
     else if (method_str == "TRACE")
-        builder.setMethod(HttpMethod::TRACE);
+        builder.setMethod(HttpMethod::HTTP_TRACE);
     else if (method_str == "CONNECT")
-        builder.setMethod(HttpMethod::CONNECT);
+        builder.setMethod(HttpMethod::HTTP_CONNECT);
     else
         builder.setMethod(HttpMethod::UNKNOWN);
 
@@ -201,11 +201,11 @@ HttpRequest HttpProtocol::parseRequest(const std::string& raw_request) const {
 std::string HttpProtocol::serializeResponse(const HttpResponse& response) const {
     std::ostringstream out;
 
-    out << "HTTP/1.1 " << static_cast<int>(response.status) << " " << response.reasonPhrase << "\r\n";
+    out << "HTTP/1.1 " << static_cast<int>(response.status()) << " " << response.reasonPhrase() << "\r\n";
 
     bool has_content_length = false;
 
-    for (const auto& [key, value] : response.headers) {
+    for (const auto& [key, value] : response.headers()) {
         if (key == "Content-Length") {
             has_content_length = true;
         }
@@ -213,12 +213,12 @@ std::string HttpProtocol::serializeResponse(const HttpResponse& response) const 
     }
 
     if (!has_content_length) {
-        out << "Content-Length: " << response.body.size() << "\r\n";
+        out << "Content-Length: " << response.body().size() << "\r\n";
     }
 
     out << "\r\n";
 
-    out << response.body;
+    out << response.body();
 
     return out.str();
 }

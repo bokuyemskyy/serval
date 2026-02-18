@@ -4,19 +4,28 @@
 #include <map>
 #include <string>
 
+/**
+ * The method of HTTP request
+ * The HTTP_ prefix prevents name collisions with Windows system macros
+ */
 enum class HttpMethod {
-    GET,
-    POST,
-    PUT,
-    PATCH,
-    DELETE,
-    HEAD,
-    OPTIONS,
-    TRACE,
-    CONNECT,
+    HTTP_GET,
+    HTTP_POST,
+    HTTP_PUT,
+    HTTP_PATCH,
+    HTTP_DELETE,
+    HTTP_HEAD,
+    HTTP_OPTIONS,
+    HTTP_TRACE,
+    HTTP_CONNECT,
     UNKNOWN
 };
 
+/**
+ *  The HTTP protocol version to use
+ *  This project's HttpProtocol class does not support HTTP/2 and HTTP/3
+ *  Requests with a version higher then HTTP/1.1 will be implicitly downgraded to HTTP/1.1
+ */
 enum class HttpVersion {
     HTTP_1_0,
     HTTP_1_1,
@@ -25,107 +34,110 @@ enum class HttpVersion {
     UNKNOWN
 };
 
+/**
+ * The HTTP response status
+ * Has a helper method to convert to reason phrase
+ */
 enum class HttpStatus {
-
     // Informational
-    CONTINUE            = 100,
-    SWITCHING_PROTOCOLS = 101,
+    HTTP_CONTINUE            = 100,
+    HTTP_SWITCHING_PROTOCOLS = 101,
 
     // Success
-    OK              = 200,
-    CREATED         = 201,
-    ACCEPTED        = 202,
-    NO_CONTENT      = 204,
-    PARTIAL_CONTENT = 206,
+    HTTP_OK              = 200,
+    HTTP_CREATED         = 201,
+    HTTP_ACCEPTED        = 202,
+    HTTP_NO_CONTENT      = 204,
+    HTTP_PARTIAL_CONTENT = 206,
 
     // Redirection
-    MOVED_PERMANENTLY  = 301,
-    FOUND              = 302,
-    SEE_OTHER          = 303,
-    NOT_MODIFIED       = 304,
-    TEMPORARY_REDIRECT = 307,
-    PERMANENT_REDIRECT = 308,
+    HTTP_MOVED_PERMANENTLY  = 301,
+    HTTP_FOUND              = 302,
+    HTTP_SEE_OTHER          = 303,
+    HTTP_NOT_MODIFIED       = 304,
+    HTTP_TEMPORARY_REDIRECT = 307,
+    HTTP_PERMANENT_REDIRECT = 308,
 
     // Client errors
-    BAD_REQUEST            = 400,
-    UNAUTHORIZED           = 401,
-    FORBIDDEN              = 403,
-    NOT_FOUND              = 404,
-    METHOD_NOT_ALLOWED     = 405,
-    REQUEST_TIMEOUT        = 408,
-    CONFLICT               = 409,
-    GONE                   = 410,
-    PAYLOAD_TOO_LARGE      = 413,
-    UNSUPPORTED_MEDIA_TYPE = 415,
-    TOO_MANY_REQUESTS      = 429,
+    HTTP_BAD_REQUEST            = 400,
+    HTTP_UNAUTHORIZED           = 401,
+    HTTP_FORBIDDEN              = 403,
+    HTTP_NOT_FOUND              = 404,
+    HTTP_METHOD_NOT_ALLOWED     = 405,
+    HTTP_REQUEST_TIMEOUT        = 408,
+    HTTP_CONFLICT               = 409,
+    HTTP_GONE                   = 410,
+    HTTP_PAYLOAD_TOO_LARGE      = 413,
+    HTTP_UNSUPPORTED_MEDIA_TYPE = 415,
+    HTTP_TOO_MANY_REQUESTS      = 429,
 
     // Server errors
-    INTERNAL_SERVER_ERROR = 500,
-    NOT_IMPLEMENTED       = 501,
-    BAD_GATEWAY           = 502,
-    SERVICE_UNAVAILABLE   = 503,
-    GATEWAY_TIMEOUT       = 504
+    HTTP_INTERNAL_SERVER_ERROR = 500,
+    HTTP_NOT_IMPLEMENTED       = 501,
+    HTTP_BAD_GATEWAY           = 502,
+    HTTP_SERVICE_UNAVAILABLE   = 503,
+    HTTP_GATEWAY_TIMEOUT       = 504
 };
 
 inline const char* toReasonPhrase(HttpStatus status) {
     switch (status) {
-        case HttpStatus::CONTINUE:
+        case HttpStatus::HTTP_CONTINUE:
             return "Continue";
-        case HttpStatus::SWITCHING_PROTOCOLS:
+        case HttpStatus::HTTP_SWITCHING_PROTOCOLS:
             return "Switching Protocols";
-        case HttpStatus::OK:
+        case HttpStatus::HTTP_OK:
             return "OK";
-        case HttpStatus::CREATED:
+        case HttpStatus::HTTP_CREATED:
             return "Created";
-        case HttpStatus::ACCEPTED:
+        case HttpStatus::HTTP_ACCEPTED:
             return "Accepted";
-        case HttpStatus::NO_CONTENT:
+        case HttpStatus::HTTP_NO_CONTENT:
             return "No Content";
-        case HttpStatus::PARTIAL_CONTENT:
+        case HttpStatus::HTTP_PARTIAL_CONTENT:
             return "Partial Content";
-        case HttpStatus::MOVED_PERMANENTLY:
+        case HttpStatus::HTTP_MOVED_PERMANENTLY:
             return "Moved Permanently";
-        case HttpStatus::FOUND:
+        case HttpStatus::HTTP_FOUND:
             return "Found";
-        case HttpStatus::SEE_OTHER:
+        case HttpStatus::HTTP_SEE_OTHER:
             return "See Other";
-        case HttpStatus::NOT_MODIFIED:
+        case HttpStatus::HTTP_NOT_MODIFIED:
             return "Not Modified";
-        case HttpStatus::TEMPORARY_REDIRECT:
+        case HttpStatus::HTTP_TEMPORARY_REDIRECT:
             return "Temporary Redirect";
-        case HttpStatus::PERMANENT_REDIRECT:
+        case HttpStatus::HTTP_PERMANENT_REDIRECT:
             return "Permanent Redirect";
-        case HttpStatus::BAD_REQUEST:
+        case HttpStatus::HTTP_BAD_REQUEST:
             return "Bad Request";
-        case HttpStatus::UNAUTHORIZED:
+        case HttpStatus::HTTP_UNAUTHORIZED:
             return "Unauthorized";
-        case HttpStatus::FORBIDDEN:
+        case HttpStatus::HTTP_FORBIDDEN:
             return "Forbidden";
-        case HttpStatus::NOT_FOUND:
+        case HttpStatus::HTTP_NOT_FOUND:
             return "Not Found";
-        case HttpStatus::METHOD_NOT_ALLOWED:
+        case HttpStatus::HTTP_METHOD_NOT_ALLOWED:
             return "Method Not Allowed";
-        case HttpStatus::REQUEST_TIMEOUT:
+        case HttpStatus::HTTP_REQUEST_TIMEOUT:
             return "Request Timeout";
-        case HttpStatus::CONFLICT:
+        case HttpStatus::HTTP_CONFLICT:
             return "Conflict";
-        case HttpStatus::GONE:
+        case HttpStatus::HTTP_GONE:
             return "Gone";
-        case HttpStatus::PAYLOAD_TOO_LARGE:
+        case HttpStatus::HTTP_PAYLOAD_TOO_LARGE:
             return "Payload Too Large";
-        case HttpStatus::UNSUPPORTED_MEDIA_TYPE:
+        case HttpStatus::HTTP_UNSUPPORTED_MEDIA_TYPE:
             return "Unsupported Media Type";
-        case HttpStatus::TOO_MANY_REQUESTS:
+        case HttpStatus::HTTP_TOO_MANY_REQUESTS:
             return "Too Many Requests";
-        case HttpStatus::INTERNAL_SERVER_ERROR:
+        case HttpStatus::HTTP_INTERNAL_SERVER_ERROR:
             return "Internal Server Error";
-        case HttpStatus::NOT_IMPLEMENTED:
+        case HttpStatus::HTTP_NOT_IMPLEMENTED:
             return "Not Implemented";
-        case HttpStatus::BAD_GATEWAY:
+        case HttpStatus::HTTP_BAD_GATEWAY:
             return "Bad Gateway";
-        case HttpStatus::SERVICE_UNAVAILABLE:
+        case HttpStatus::HTTP_SERVICE_UNAVAILABLE:
             return "Service Unavailable";
-        case HttpStatus::GATEWAY_TIMEOUT:
+        case HttpStatus::HTTP_GATEWAY_TIMEOUT:
             return "Gateway Timeout";
 
         default:
@@ -133,6 +145,10 @@ inline const char* toReasonPhrase(HttpStatus status) {
     }
 }
 
+/**
+ * Used in header map type
+ * Headers are case-insensitive
+ */
 struct CaseInsensitiveCompare {
     bool operator()(const std::string& a, const std::string& b) const {
         return std::ranges::lexicographical_compare(

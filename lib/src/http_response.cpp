@@ -3,96 +3,112 @@
 HttpResponse::HttpResponse() = default;
 
 std::string HttpResponse::header(const std::string& name) const {
-    auto it = headers.find(name);
-    return it != headers.end() ? it->second : "";
+    auto it = m_headers.find(name);
+    return it != m_headers.end() ? it->second : "";
 }
 bool HttpResponse::hasHeader(const std::string& name) const {
-    return headers.contains(name);
+    return m_headers.contains(name);
+}
+
+HttpVersion HttpResponse::version() const {
+    return m_version;
+}
+HttpStatus HttpResponse::status() const {
+    return m_status;
+}
+const std::string& HttpResponse::reasonPhrase() const {
+    return m_reason_phrase;
+}
+const HeaderMap& HttpResponse::headers() const {
+    return m_headers;
+}
+const std::string& HttpResponse::body() const {
+    return m_body;
 }
 
 HttpResponse HttpResponse::ok(std::string body, std::string ct) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::OK)
+        .setStatus(HttpStatus::HTTP_OK)
         .addHeader("Content-Type", ct)
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::json(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::OK)
+        .setStatus(HttpStatus::HTTP_OK)
         .addHeader("Content-Type", "application/json")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::html(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::OK)
+        .setStatus(HttpStatus::HTTP_OK)
         .addHeader("Content-Type", "text/html; charset=utf-8")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::created(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::CREATED)
+        .setStatus(HttpStatus::HTTP_CREATED)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::noContent() {
-    return HttpResponse::Builder().setStatus(HttpStatus::NO_CONTENT).build();
+    return HttpResponse::Builder().setStatus(HttpStatus::HTTP_NO_CONTENT).build();
 }
 HttpResponse HttpResponse::badRequest(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::BAD_REQUEST)
+        .setStatus(HttpStatus::HTTP_BAD_REQUEST)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::unauthorized(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::UNAUTHORIZED)
+        .setStatus(HttpStatus::HTTP_UNAUTHORIZED)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::forbidden(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::FORBIDDEN)
+        .setStatus(HttpStatus::HTTP_FORBIDDEN)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::notFound(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::NOT_FOUND)
+        .setStatus(HttpStatus::HTTP_NOT_FOUND)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::methodNotAllowed(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::METHOD_NOT_ALLOWED)
+        .setStatus(HttpStatus::HTTP_METHOD_NOT_ALLOWED)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::timeout() {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::REQUEST_TIMEOUT)
+        .setStatus(HttpStatus::HTTP_REQUEST_TIMEOUT)
         .addHeader("Content-Type", "text/plain")
         .setBody("Request Timeout")
         .build();
 }
 HttpResponse HttpResponse::conflict(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::CONFLICT)
+        .setStatus(HttpStatus::HTTP_CONFLICT)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::tooManyRequests(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::TOO_MANY_REQUESTS)
+        .setStatus(HttpStatus::HTTP_TOO_MANY_REQUESTS)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
@@ -106,28 +122,28 @@ HttpResponse HttpResponse::headerTooLarge() {
 }
 HttpResponse HttpResponse::bodyTooLarge() {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::PAYLOAD_TOO_LARGE)
+        .setStatus(HttpStatus::HTTP_PAYLOAD_TOO_LARGE)
         .addHeader("Content-Type", "text/plain")
         .setBody("Payload Too Large")
         .build();
 }
 HttpResponse HttpResponse::internalServerError(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::INTERNAL_SERVER_ERROR)
+        .setStatus(HttpStatus::HTTP_INTERNAL_SERVER_ERROR)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();
 }
 HttpResponse HttpResponse::notImplemented() {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::NOT_IMPLEMENTED)
+        .setStatus(HttpStatus::HTTP_NOT_IMPLEMENTED)
         .addHeader("Content-Type", "text/plain")
         .setBody("Not Implemented")
         .build();
 }
 HttpResponse HttpResponse::serviceUnavailable(std::string body) {
     return HttpResponse::Builder()
-        .setStatus(HttpStatus::SERVICE_UNAVAILABLE)
+        .setStatus(HttpStatus::HTTP_SERVICE_UNAVAILABLE)
         .addHeader("Content-Type", "text/plain")
         .setBody(std::move(body))
         .build();

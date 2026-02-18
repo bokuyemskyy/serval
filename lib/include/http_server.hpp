@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../server/include/config.hpp"
 #include "event_poll.hpp"
 #include "http_connection_handler.hpp"
+#include "http_server_config.hpp"
 #include "ilogger.hpp"
 #include "socket.hpp"
 #include "thread_pool.hpp"

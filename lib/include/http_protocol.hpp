@@ -1,7 +1,8 @@
 #pragma once
-#include "../../server/include/config.hpp"
+
 #include "http_request.hpp"
 #include "http_response.hpp"
+#include "http_server_config.hpp"
 
 #include <string>
 

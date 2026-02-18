@@ -1,8 +1,8 @@
 #include "http_server.hpp"
 
-#include "../../server/include/config.hpp"
 #include "event_poll.hpp"
 #include "http_connection_exception.hpp"
+#include "http_server_config.hpp"
 #include "socket.hpp"
 
 HttpServer::HttpServer(std::shared_ptr<IHttpRequestHandler> request_handler, std::shared_ptr<ILogger> logger,

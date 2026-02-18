@@ -1,8 +1,6 @@
-#include "../include/http_connection.hpp"
+#include "http_connection.hpp"
 
-#include "../include/http_connection_exception.hpp"
-#include "../include/http_request.hpp"
-#include "../include/http_response.hpp"
+#include "http_connection_exception.hpp"
 #include "socket.hpp"
 
 #include <thread>

@@ -22,21 +22,23 @@ enum class HttpMethod {
 };
 
 /**
- *  The HTTP protocol version to use
- *  This project's HttpProtocol class does not support HTTP/2 and HTTP/3
- *  Requests with a version higher then HTTP/1.1 will be implicitly downgraded to HTTP/1.1
+ *  The HTTP protocol version to use.
+ *  This project's HttpProtocol class does not support HTTP/2 and HTTP/3.
+ *  Requests with a version higher than HTTP/1.1 will be implicitly downgraded to HTTP/1.1.
  */
 enum class HttpVersion {
-    HTTP_1_0,
-    HTTP_1_1,
-    HTTP_2_0, // Not supported
-    HTTP_3_0, // Not supported
+    HTTP_1_0, ///< Requests require explicit "Connection: keep-alive" header to make the connection keep-alive.
+    HTTP_1_1, ///< Requests are keep-alive by default. Requires "Connection: close" request header to close it.
+    HTTP_2_0, ///< Not supported
+    HTTP_3_0, ///< Not supported
     UNKNOWN
 };
 
 /**
- * The HTTP response status
- * Has a helper method to convert to reason phrase
+ * The HTTP response status.
+ * Has a helper method to convert to reason phrase.
+ *
+ * @see toReasonPhrase()
  */
 enum class HttpStatus {
     // Informational
@@ -79,6 +81,9 @@ enum class HttpStatus {
     HTTP_GATEWAY_TIMEOUT       = 504
 };
 
+/**
+ * Converts an HttpStatus enum value to its standard reason phrase string.
+ */
 inline const char* toReasonPhrase(HttpStatus status) {
     switch (status) {
         case HttpStatus::HTTP_CONTINUE:

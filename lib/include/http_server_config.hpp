@@ -6,6 +6,16 @@
 #include <string>
 #include <unordered_map>
 
+/**
+ * Configuration settings for an HTTP server.
+ *
+ * This class encapsulates configurable parameters for an HTTP server instance including network settings, logging,
+ * security features, performance tuning, and protocol limits. All settings are initialized with safe defaults.
+ *
+ * The class supports the builder pattern for construction. Use HttpServerConfig::Builder to create configurations.
+ *
+ * @see HttpServerConfig::Builder
+ */
 class HttpServerConfig {
   public:
     std::string host = "127.0.0.1";

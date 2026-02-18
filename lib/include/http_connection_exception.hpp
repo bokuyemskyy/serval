@@ -3,6 +3,9 @@
 #include <exception>
 #include <string>
 
+/**
+ * Base exception class for connection-related exceptions
+ */
 class HttpConnectionException : public std::exception {
   public:
     explicit HttpConnectionException(const std::string& msg) : m_message(msg) {}

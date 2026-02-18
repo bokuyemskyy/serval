@@ -3,7 +3,6 @@
 #include "http_connection.hpp"
 #include "ihttp_request_handler.hpp"
 
-#include <functional>
 class HttpConnectionHandler {
   public:
     HttpConnectionHandler(std::shared_ptr<IHttpRequestHandler> request_handler, HttpServerConfig& config);

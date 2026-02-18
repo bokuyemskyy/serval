@@ -1,11 +1,10 @@
 PROJECT_NAME           = "serval"
-PROJECT_BRIEF          = ""
+PROJECT_BRIEF          = "A minimal yet efficient HTTP/1.1 server library providing convenient abstractions, asynchronous I/O, multithreading support, and a flexible request handler interface for custom implementations."
 OUTPUT_DIRECTORY       = docs
 GENERATE_HTML          = YES
 GENERATE_LATEX         = NO
-USE_MDFILE_AS_MAINPAGE = README.md
-INPUT                  = app/
-EXCLUDE_PATTERNS       = */tests/*
+USE_MDFILE_AS_MAINPAGE = lib/README.md
+INPUT                  = lib/
 RECURSIVE              = YES
 CALL_GRAPH             = YES
 CALLER_GRAPH           = YES

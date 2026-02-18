@@ -32,13 +32,13 @@ class StaticFileHandler : public IHttpRequestHandler {
 
     HttpResponse handle(const HttpRequest& request) override {
         // Reject invalid paths immediately
-        if (request.path.empty() || request.path[0] != '/') {
+        if (request.path().empty() || request.path()[0] != '/') {
             return HttpResponse::badRequest();
         }
 
         std::filesystem::path file_path;
         try {
-            file_path = std::filesystem::canonical(m_root_dir / request.path.substr(1));
+            file_path = std::filesystem::canonical(m_root_dir / request.path().substr(1));
         } catch (const std::exception& e) {
             std::cout << e.what() << std::endl;
             return HttpResponse::notFound(); // Path does not exist or is invalid

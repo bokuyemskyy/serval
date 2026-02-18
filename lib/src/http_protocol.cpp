@@ -284,12 +284,12 @@ bool HttpProtocol::shouldKeepAlive(const HttpRequest& request) const {
     std::string connection = request.header("Connection");
     std::ranges::transform(connection, connection.begin(), ::tolower);
 
-    if (request.version == HttpVersion::HTTP_1_1) {
+    if (request.version() == HttpVersion::HTTP_1_1) {
         // Keep-alive is the default for HTTP/1.1
         return connection != "close";
     }
 
-    if (request.version == HttpVersion::HTTP_1_0) {
+    if (request.version() == HttpVersion::HTTP_1_0) {
         // Keep-alive must be requested for HTTP/1.0
         return connection == "keep-alive";
     }

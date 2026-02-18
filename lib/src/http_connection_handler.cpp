@@ -16,8 +16,9 @@ void HttpConnectionHandler::handle(std::shared_ptr<HttpConnection> conn) {
         if (conn->recv()) {
             if (m_protocol.isRequestComplete(conn->buffer)) {
                 HttpRequest request = m_protocol.parseRequest(conn->buffer);
-                conn->keep_alive = request.keep_alive; // Protocol decides on whether request keeps the connection alive
-                                                       // based on the HTTP version per-request
+                conn->keep_alive =
+                    m_protocol.shouldKeepAlive(request); // Protocol decides on whether request makes the connection
+                                                         // keep-alive based on the HTTP version per-request
                 HttpResponse response = m_request_handler->handle(request);
                 conn->startSend(m_protocol.serializeResponse(response));
             }

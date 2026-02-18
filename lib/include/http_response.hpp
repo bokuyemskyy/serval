@@ -1,105 +1,89 @@
 #pragma once
 
+#include "http_types.hpp"
+
 #include <map>
 #include <string>
 
 struct HttpResponse {
+    HttpResponse();
+
+    HttpVersion version      = HttpVersion::HTTP_1_1;
+    HttpStatus  status       = HttpStatus::OK;
+    std::string reasonPhrase = "OK";
+
+    HeaderMap   headers;
+    std::string body;
+
+    std::string header(const std::string& name) const;
+    bool        hasHeader(const std::string& name) const;
+
+    class Builder;
+
+    // Common responses
+    static HttpResponse ok(std::string body = "", std::string ct = "text/plain");
+
+    static HttpResponse json(std::string body);
+
+    static HttpResponse html(std::string body);
+
+    static HttpResponse created(std::string body = "");
+
+    static HttpResponse noContent();
+
+    static HttpResponse badRequest(std::string body = "Bad Request");
+
+    static HttpResponse unauthorized(std::string body = "Unauthorized");
+
+    static HttpResponse forbidden(std::string body = "Forbidden");
+
+    static HttpResponse notFound(std::string body = "Not Found");
+
+    static HttpResponse methodNotAllowed(std::string body = "Method Not Allowed");
+
+    static HttpResponse timeout();
+
+    static HttpResponse conflict(std::string body = "Conflict");
+
+    static HttpResponse tooManyRequests(std::string body = "Too Many Requests");
+
+    static HttpResponse headerTooLarge();
+
+    static HttpResponse bodyTooLarge();
+
+    static HttpResponse internalServerError(std::string body = "Internal Server Error");
+
+    static HttpResponse notImplemented();
+
+    static HttpResponse serviceUnavailable(std::string body = "Service Unavailable");
+};
+
+class HttpResponse::Builder {
   public:
-    explicit HttpResponse(int status = 200, std::string body = "", std::string contentType = "text/plain")
-        : m_status(status), m_body(std::move(body)) {
-        setHeader("Content-Type", std::move(contentType));
+    Builder& setVersion(HttpVersion v) {
+        res.version = v;
+        return *this;
     }
 
-    void setHeader(const std::string& key, const std::string& value) { m_headers[key] = value; }
-
-    std::string toString() const {
-        std::string response = "HTTP/1.1 " + std::to_string(m_status) + " " + reasonPhrase() + "\r\n";
-        for (auto& [key, value] : m_headers) {
-            response += key + ": " + value + "\r\n";
-        }
-        response += "Content-Length: " + std::to_string(m_body.size()) + "\r\n";
-        response += "\r\n";
-        response += m_body;
-        return response;
+    Builder& setStatus(HttpStatus s) {
+        res.status       = s;
+        res.reasonPhrase = toReasonPhrase(s);
+        return *this;
     }
 
-    static HttpResponse ok(std::string body = "", std::string ct = "text/plain") {
-        return HttpResponse(200, std::move(body), std::move(ct));
+    Builder& addHeader(const std::string& key, const std::string& value) {
+        res.headers[key] = value;
+        return *this;
     }
 
-    static HttpResponse json(std::string body) { return HttpResponse(200, std::move(body), "application/json"); }
-
-    static HttpResponse html(std::string body) {
-        return HttpResponse(200, std::move(body), "text/html; charset=utf-8");
+    Builder& setBody(const std::string& b) {
+        res.body = b;
+        addHeader("Content-Length", std::to_string(b.size()));
+        return *this;
     }
 
-    static HttpResponse created(std::string body = "") { return HttpResponse(201, std::move(body), "text/plain"); }
-
-    static HttpResponse noContent() { return HttpResponse(204); }
-
-    static HttpResponse badRequest(std::string body = "Bad Request") {
-        return HttpResponse(400, std::move(body), "text/plain");
-    }
-
-    static HttpResponse unauthorized(std::string body = "Unauthorized") {
-        return HttpResponse(401, std::move(body), "text/plain");
-    }
-
-    static HttpResponse forbidden(std::string body = "Forbidden") {
-        return HttpResponse(403, std::move(body), "text/plain");
-    }
-
-    static HttpResponse notFound(std::string body = "Not Found") {
-        return HttpResponse(404, std::move(body), "text/plain");
-    }
-
-    static HttpResponse methodNotAllowed(std::string body = "Method Not Allowed") {
-        return HttpResponse(405, std::move(body), "text/plain");
-    }
-
-    static HttpResponse timeout() { return HttpResponse(408, "Request Timeout", "text/plain"); }
-
-    static HttpResponse conflict(std::string body = "Conflict") {
-        return HttpResponse(409, std::move(body), "text/plain");
-    }
-
-    static HttpResponse tooManyRequests(std::string body = "Too Many Requests") {
-        return HttpResponse(429, std::move(body), "text/plain");
-    }
-
-    static HttpResponse headerTooLarge() { return HttpResponse(431, "Request Header Fields Too Large", "text/plain"); }
-
-    static HttpResponse bodyTooLarge() { return HttpResponse(413, "Payload Too Large", "text/plain"); }
-
-    static HttpResponse internalServerError(std::string body = "Internal Server Error") {
-        return HttpResponse(500, std::move(body), "text/plain");
-    }
-
-    static HttpResponse notImplemented() { return HttpResponse(501, "Not Implemented", "text/plain"); }
-
-    static HttpResponse serviceUnavailable(std::string body = "Service Unavailable") {
-        return HttpResponse(503, std::move(body), "text/plain");
-    }
+    HttpResponse build() { return res; }
 
   private:
-    int                                m_status;
-    std::string                        m_body;
-    std::map<std::string, std::string> m_headers;
-
-    std::string reasonPhrase() const {
-        switch (m_status) {
-            case 200:
-                return "OK";
-            case 408:
-                return "Request Timeout";
-            case 413:
-                return "Payload Too Large";
-            case 431:
-                return "Request Header Fields Too Large";
-            case 500:
-                return "Internal Server Error";
-            default:
-                return "Unknown";
-        }
-    }
+    HttpResponse res;
 };

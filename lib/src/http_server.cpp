@@ -21,15 +21,25 @@ void HttpServer::addConnection(std::shared_ptr<HttpConnection> conn) {
     m_poll.addFd(conn->fd(), PollEvent::READ | PollEvent::ONESHOT);
 }
 
+std::shared_ptr<HttpConnection> HttpServer::getConnection(int fd) {
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    auto it = m_connections.find(fd);
+    if (it == m_connections.end())
+        return nullptr;
+
+    return it->second;
+}
+
 void HttpServer::rearmConnection(std::shared_ptr<HttpConnection> conn) {
     std::lock_guard<std::mutex> lock(m_mutex);
 
     switch (conn->state) {
         case HttpConnectionState::READING:
-            m_poll.modifyFd(conn->fd(), PollEvent::READ | PollEvent::ONESHOT);
+            m_poll.addFd(conn->fd(), PollEvent::READ | PollEvent::ONESHOT);
             break;
         case HttpConnectionState::WRITING:
-            m_poll.modifyFd(conn->fd(), PollEvent::WRITE | PollEvent::ONESHOT);
+            m_poll.addFd(conn->fd(), PollEvent::WRITE | PollEvent::ONESHOT);
             break;
         case HttpConnectionState::CLOSING:
             throw std::runtime_error("Cannot rearm HttpConnection which is in close state.");
@@ -63,14 +73,17 @@ void HttpServer::run() {
         m_poll.wait(200);
 
         for (const auto& [fd, events] : m_poll.events()) {
+            m_logger->log(LogLevel::DEBUG, "Poll received event " + std::to_string(static_cast<int>(events)) +
+                                               " on fd " + std::to_string(fd));
             if (fd == m_listen_socket.fd()) {
                 Socket client = m_listen_socket.accept();
                 client.setNonBlocking(true);
 
                 std::shared_ptr<HttpConnection> conn = std::make_shared<HttpConnection>(std::move(client));
-
+                // m_connections[conn->fd()]            = conn;
                 addConnection(conn);
-
+            } else {
+                auto conn = getConnection(fd);
                 m_thread_pool.enqueue([this, conn] {
                     try {
                         m_connection_handler.handle(conn);

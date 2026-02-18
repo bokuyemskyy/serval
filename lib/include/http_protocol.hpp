@@ -8,9 +8,10 @@
 class HttpProtocol {
   public:
     HttpProtocol(HttpServerConfig& config);
-    HttpRequest parseRequest(const std::string& raw_request);
-    std::string serializeResponse(const HttpResponse& response);
-    bool        isRequestComplete(const std::string& raw_request);
+    HttpRequest parseRequest(const std::string& raw_request) const;
+    std::string serializeResponse(const HttpResponse& response) const;
+    bool        isRequestComplete(const std::string& raw_request) const;
+    bool        shouldKeepAlive(const HttpRequest& request) const;
 
   private:
     HttpServerConfig& m_config;

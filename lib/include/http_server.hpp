@@ -37,7 +37,8 @@ class HttpServer {
     // Methods
     void createListenSocket();
 
-    void addConnection(std::shared_ptr<HttpConnection> conn);
-    void rearmConnection(std::shared_ptr<HttpConnection> conn);
-    void removeConnection(std::shared_ptr<HttpConnection> conn);
+    void                            addConnection(std::shared_ptr<HttpConnection> conn);
+    void                            rearmConnection(std::shared_ptr<HttpConnection> conn);
+    void                            removeConnection(std::shared_ptr<HttpConnection> conn);
+    std::shared_ptr<HttpConnection> getConnection(int fd);
 };

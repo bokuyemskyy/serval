@@ -39,7 +39,8 @@ class StaticFileHandler : public IHttpRequestHandler {
         std::filesystem::path file_path;
         try {
             file_path = std::filesystem::canonical(m_root_dir / request.path.substr(1));
-        } catch (...) {
+        } catch (const std::exception& e) {
+            std::cout << e.what() << std::endl;
             return HttpResponse::notFound(); // Path does not exist or is invalid
         }
 

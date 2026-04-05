@@ -3,7 +3,6 @@
 #include "ilogger.hpp"
 
 #include <ctime>
-#include <iostream>
 #include <mutex>
 #include <string>
 

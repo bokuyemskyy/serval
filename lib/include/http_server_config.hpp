@@ -2,9 +2,7 @@
 
 #include "ilogger.hpp"
 
-#include <cxxopts.hpp>
 #include <string>
-#include <unordered_map>
 
 /**
  * Configuration settings for an HTTP server.
@@ -22,11 +20,6 @@ class HttpServerConfig {
     int         port = 8080;
 
     LogLevel logging_level = LogLevel::INFO;
-
-    bool        cors_enabled      = false;
-    std::string cors_allow_origin = "*";
-
-    std::unordered_map<std::string, std::string> custom_headers{};
 
     int worker_threads        = 4;
     int max_connections       = 100;
@@ -54,26 +47,6 @@ class HttpServerConfig::Builder {
 
     Builder& setLoggingLevel(LogLevel level) {
         m_config.logging_level = level;
-        return *this;
-    }
-
-    Builder& enableCors(bool enabled = true) {
-        m_config.cors_enabled = enabled;
-        return *this;
-    }
-
-    Builder& setCorsAllowOrigin(const std::string& origin) {
-        m_config.cors_allow_origin = origin;
-        return *this;
-    }
-
-    Builder& addCustomHeader(const std::string& key, const std::string& value) {
-        m_config.custom_headers[key] = value;
-        return *this;
-    }
-
-    Builder& setCustomHeaders(const std::unordered_map<std::string, std::string>& headers) {
-        m_config.custom_headers = headers;
         return *this;
     }
 

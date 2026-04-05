@@ -68,7 +68,7 @@ class HttpResponse::Builder {
         return *this;
     }
 
-    Builder& addHeader(const std::string& key, const std::string& value) {
+    Builder& setHeader(const std::string& key, const std::string& value) {
         res.m_headers[key] = value;
         return *this;
     }

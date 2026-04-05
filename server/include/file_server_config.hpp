@@ -1,49 +1,34 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+struct PathConfig {
+    // CORS
+    std::optional<std::vector<std::string>> allow_origin;
+    std::optional<bool>                     allow_credentials;
+    std::optional<std::vector<std::string>> allow_methods;
+    std::optional<std::vector<std::string>> allow_headers;
+
+    // Misc
+    std::optional<bool>                                         directory_listing;
+    std::optional<bool>                                         show_hidden_files;
+    std::optional<std::unordered_map<std::string, std::string>> custom_headers;
+    std::optional<std::unordered_map<std::string, std::string>> custom_mime_types;
+};
+
+struct Rule {
+    std::string path;
+    PathConfig  config;
+};
 
 class FileServerConfig {
   public:
-    std::string root_directory = ".";
+    std::string       root_directory = ".";
+    std::vector<Rule> rules;
 
-    bool directory_listing = true;
-    bool show_hidden_files = false;
-
-    std::unordered_map<std::string, std::string> custom_mime_types{};
-
-    class Builder;
-};
-
-class FileServerConfig::Builder {
-  public:
-    Builder& setRootDirectory(const std::string& d) {
-        m_config.root_directory = d;
-        return *this;
-    }
-
-    Builder& enableDirectoryListing(bool enabled = true) {
-        m_config.directory_listing = enabled;
-        return *this;
-    }
-
-    Builder& enableShowHiddenFiles(bool enabled = true) {
-        m_config.show_hidden_files = enabled;
-        return *this;
-    }
-
-    Builder& addCustomMimeType(const std::string& key, const std::string& value) {
-        m_config.custom_mime_types[key] = value;
-        return *this;
-    }
-
-    Builder& setCustomMimeTypes(const std::unordered_map<std::string, std::string>& types) {
-        m_config.custom_mime_types = types;
-        return *this;
-    }
-
-    FileServerConfig build() { return m_config; }
-
-  private:
-    FileServerConfig m_config;
+    FileServerConfig(std::string root_directory = ".", std::vector<Rule> rules = {})
+        : root_directory(std::move(root_directory)), rules(std::move(rules)) {}
 };

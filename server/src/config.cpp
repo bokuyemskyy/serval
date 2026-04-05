@@ -1,11 +1,13 @@
 #include "config.hpp"
 
+#include "file_server_config.hpp"
+
 #include <cxxopts.hpp>
 #include <filesystem>
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <toml++/toml.hpp>
+#include <yaml-cpp/yaml.h>
 
 ServerConfig ServerConfig::load(int argc, char* argv[]) {
     cxxopts::Options options("serval", "Static HTTP server");
@@ -16,9 +18,7 @@ ServerConfig ServerConfig::load(int argc, char* argv[]) {
     ("p,port", "Port to use", cxxopts::value<int>())
     ("d,directory", "Root directory to serve", cxxopts::value<std::string>())
     ("h,help", "Print help message", cxxopts::value<bool>()->default_value("false"))
-    ("c,config", "Config file path", cxxopts::value<std::string>())
-    ("no-index", "Disable directory listing", cxxopts::value<bool>()->default_value("false"))
-    ("cors", "Enable cors headers", cxxopts::value<bool>()->default_value("false"));
+    ("c,config", "Config file path", cxxopts::value<std::string>());
     // clang-format on
 
     auto parse_result = options.parse(argc, argv);
@@ -34,7 +34,7 @@ ServerConfig ServerConfig::load(int argc, char* argv[]) {
     if (parse_result.count("config")) {
         config_path = parse_result["config"].as<std::string>();
     } else {
-        for (const auto& name : {"server.toml", "config.toml", ".serverrc"}) {
+        for (const auto& name : {"server.yaml", "config.yaml", "server.yml", "config.yml", ".serverrc"}) {
             if (std::filesystem::exists(name)) {
                 config_path = name;
                 break;
@@ -44,7 +44,7 @@ ServerConfig ServerConfig::load(int argc, char* argv[]) {
 
     if (!config_path.empty()) {
         try {
-            new_config.loadFromToml(config_path);
+            new_config.loadFromYaml(config_path);
         } catch (const std::exception& e) {
             throw std::runtime_error("Error loading config file: " + std::string(e.what()));
         }
@@ -55,82 +55,126 @@ ServerConfig ServerConfig::load(int argc, char* argv[]) {
     return new_config;
 }
 FileServerConfig ServerConfig::createFileServerConfig() const {
-    return FileServerConfig::Builder()
-        .setRootDirectory(root_directory)
-        .enableDirectoryListing(directory_listing)
-        .enableShowHiddenFiles(show_hidden_files)
-        .setCustomMimeTypes(custom_mime_types)
-        .build();
+    return FileServerConfig(root_directory, rules);
 }
 HttpServerConfig ServerConfig::createHttpServerConfig() const {
     return HttpServerConfig::Builder()
         .setHost(host)
         .setPort(port)
         .setLoggingLevel(logging_level)
-        .enableCors(cors_enabled)
-        .setCorsAllowOrigin(cors_allow_origin)
-        .setCustomHeaders(custom_headers)
         .setWorkerThreads(worker_threads)
         .setMaxConnections(max_connections)
         .setConnectionTimeoutMs(connection_timeout_ms)
         .build();
 }
 
-void ServerConfig::loadFromToml(const std::string& config_path) {
-    std::filesystem::path p(config_path);
+void ServerConfig::loadFromYaml(const std::string& config_path) {
+    std::filesystem::path file_path(config_path);
 
-    if (!std::filesystem::is_regular_file(p))
+    if (!std::filesystem::is_regular_file(file_path))
         throw std::runtime_error("Config file not found: \'" + config_path + "\'");
 
-    toml::table toml = toml::parse_file(config_path);
+    YAML::Node yaml = YAML::LoadFile(config_path);
 
-    host           = toml["host"].value_or(host);
-    port           = toml["port"].value_or(port);
-    root_directory = toml["root_dir"].value_or(root_directory);
+    if (yaml["host"] && yaml["host"].IsScalar())
+        host = yaml["host"].as<std::string>();
+    port           = yaml["port"] ? yaml["port"].as<int>() : port;
+    root_directory = yaml["root_directory"] ? yaml["root_directory"].as<std::string>() : root_directory;
 
-    if (auto logging = toml["logging"].as_table()) {
-        std::string logging_level_str = logging->get("level")->value_or("info");
+    if (yaml["logging"]) {
+        auto log = yaml["logging"];
 
-        if (logging_level_str == "debug")
-            logging_level = LogLevel::DEBUG;
-        else if (logging_level_str == "info")
-            logging_level = LogLevel::INFO;
-        else if (logging_level_str == "warn")
-            logging_level = LogLevel::WARN;
-        else if (logging_level_str == "error")
-            logging_level = LogLevel::ERR;
+        if (log.IsScalar()) {
+            std::string s = log.as<std::string>();
+
+            if (s == "debug")
+                logging_level = LogLevel::DEBUG;
+            else if (s == "info")
+                logging_level = LogLevel::INFO;
+            else if (s == "warn")
+                logging_level = LogLevel::WARN;
+            else if (s == "error")
+                logging_level = LogLevel::ERR;
+        }
+    }
+    if (yaml["threading"]) {
+        auto threading = yaml["threading"];
+
+        worker_threads  = threading["worker_threads"] ? threading["worker_threads"].as<int>() : worker_threads;
+        max_connections = threading["max_connections"] ? threading["max_connections"].as<int>() : max_connections;
+        connection_timeout_ms =
+            threading["connection_timeout_ms"] ? threading["connection_timeout_ms"].as<int>() : connection_timeout_ms;
     }
 
-    if (auto features = toml["features"].as_table()) {
-        directory_listing = features->get("directory_listing")->value_or(directory_listing);
-        show_hidden_files = features->get("show_hidden_files")->value_or(show_hidden_files);
-    }
+    if (yaml["rules"]) {
+        auto rule_nodes = yaml["rules"];
 
-    if (auto cors = toml["cors"].as_table()) {
-        cors_enabled      = cors->get("enabled")->value_or(cors_enabled);
-        cors_allow_origin = cors->get("allow_origin")->value_or(cors_allow_origin);
-    }
+        for (const auto& rule_node : rule_nodes) {
+            if (rule_node["path"] && rule_node["config"]) {
+                PathConfig config{};
 
-    if (auto threading = toml["threading"].as_table()) {
-        worker_threads        = threading->get("worker_threads")->value_or(worker_threads);
-        max_connections       = threading->get("max_connections")->value_or(max_connections);
-        connection_timeout_ms = threading->get("connection_timeout_ms")->value_or(connection_timeout_ms);
-    }
+                auto cfg = rule_node["config"];
 
-    if (auto headers = toml["headers"].as_table()) {
-        headers->for_each([this](const toml::key& key, auto&& val) {
-            if (val.is_string()) {
-                custom_headers[std::string(key)] = val.as_string()->get();
+                std::string path = rule_node["path"].as<std::string>();
+
+                if (cfg["directory_listing"])
+                    config.directory_listing = cfg["directory_listing"].as<bool>();
+                if (cfg["show_hidden_files"])
+                    config.show_hidden_files = cfg["show_hidden_files"].as<bool>();
+                if (cfg["cors"]) {
+                    auto cors = cfg["cors"];
+
+                    if (cors["allow_origin"]) {
+                        if (cors["allow_origin"].IsScalar()) {
+                            config.allow_origin = std::vector<std::string>{cors["allow_origin"].as<std::string>()};
+                        } else {
+                            std::vector<std::string> origins;
+                            for (const auto& o : cors["allow_origin"])
+                                origins.push_back(o.as<std::string>());
+                            config.allow_origin = origins;
+                        }
+                    }
+
+                    if (cors["allow_credentials"])
+                        config.allow_credentials = cors["allow_credentials"].as<bool>();
+
+                    if (cors["allow_methods"]) {
+                        std::vector<std::string> methods;
+                        for (const auto& m : cors["allow_methods"])
+                            methods.push_back(m.as<std::string>());
+                        config.allow_methods = methods;
+                    }
+
+                    if (cors["allow_headers"]) {
+                        std::vector<std::string> headers;
+                        for (const auto& h : cors["allow_headers"])
+                            headers.push_back(h.as<std::string>());
+                        config.allow_headers = headers;
+                    }
+
+                    if (cors["custom_headers"]) {
+                        std::unordered_map<std::string, std::string> headers;
+
+                        for (const auto& h : cors["custom_headers"]) {
+                            headers[h.first.as<std::string>()] = h.second.as<std::string>();
+                        }
+
+                        config.custom_headers = headers;
+                    }
+                    if (cors["custom_mime_types"]) {
+                        std::unordered_map<std::string, std::string> mime;
+
+                        for (const auto& m : cors["custom_mime_types"]) {
+                            mime[m.first.as<std::string>()] = m.second.as<std::string>();
+                        }
+
+                        config.custom_mime_types = mime;
+                    }
+                }
+
+                rules.emplace_back(Rule{rule_node["path"].as<std::string>(), config});
             }
-        });
-    }
-
-    if (auto mime = toml["mime_types"].as_table()) {
-        mime->for_each([this](const toml::key& key, auto&& val) {
-            if (val.is_string()) {
-                custom_mime_types[std::string(key)] = val.as_string()->get();
-            }
-        });
+        }
     }
 
     config_file_used = config_path;
@@ -141,14 +185,8 @@ void ServerConfig::applyCliOverrides(const cxxopts::ParseResult& parse_result) {
         host = parse_result["host"].as<std::string>();
 
     if (parse_result.count("port"))
-        port = parse_result["host"].as<int>();
+        port = parse_result["port"].as<int>();
 
     if (parse_result.count("directory"))
         root_directory = parse_result["directory"].as<std::string>();
-
-    if (parse_result.count("no-index"))
-        directory_listing = !parse_result["no-index"].as<bool>();
-
-    if (parse_result.count("cors"))
-        cors_enabled = parse_result["cors"].as<bool>();
 }

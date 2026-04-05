@@ -1,5 +1,7 @@
 #include "logger.hpp"
 
+#include <iostream>
+
 void Logger::log(LogLevel level, const std::string& message) {
     std::lock_guard<std::mutex> lock(m_mutex);
 

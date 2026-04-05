@@ -11,7 +11,10 @@ cmake --build build
 ```
 ./build/server/serval
 ```
-By default, it serves the current directory
+By default, it serves the current directory at port 8080:
+```
+http://localhost:8080/...
+```
 
 ### Options
 ```
